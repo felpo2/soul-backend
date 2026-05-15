@@ -1,7 +1,7 @@
-package com.project.soul.controller;
+package com.project.soul.interface_ui.controller;
 
-import com.project.soul.entity.User;
-import com.project.soul.service.UserService;
+import com.project.soul.domain.entity.User;
+import com.project.soul.application.service.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;

@@ -1,9 +1,9 @@
-package com.project.soul.service;
+package com.project.soul.application.service;
 
-import com.project.soul.entity.Post;
-import com.project.soul.entity.User;
-import com.project.soul.repository.PostRepository;
-import com.project.soul.repository.UserRepository;
+import com.project.soul.domain.entity.Post;
+import com.project.soul.domain.entity.User;
+import com.project.soul.domain.repository.PostRepository;
+import com.project.soul.domain.repository.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 

@@ -1,17 +1,10 @@
-package com.project.soul.entity;
+package com.project.soul.domain.entity;
 
 import jakarta.persistence.*;
-import lombok.*;
 
 import java.util.Date;
 
-@Entity
-@Getter
-@Setter
-@AllArgsConstructor
-@NoArgsConstructor
-@Builder
-public class Post {
+public class Interaction {
 
     @Id
     @GeneratedValue(strategy =  GenerationType.IDENTITY)
@@ -21,10 +14,11 @@ public class Post {
     @JoinColumn(name = "user_id", nullable = false)
     private User user;
 
-    private String content;
-    private String imageUrl;
-    private Date createdAt;
-    private Boolean visibility;
-    private Boolean metricsStatus;
+    @ManyToOne
+    @JoinColumn(name = "post_id", nullable = false)
+    private Post post;
 
+    private String type;
+    private String content;
+    private Date createdAt;
 }
