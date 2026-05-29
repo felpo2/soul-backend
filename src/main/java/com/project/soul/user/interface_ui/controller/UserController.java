@@ -1,5 +1,6 @@
 package com.project.soul.user.interface_ui.controller;
 
+import com.project.soul.user.application.dto.LoginRequestDTO;
 import com.project.soul.user.domain.entity.User;
 import com.project.soul.user.application.service.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -46,9 +47,9 @@ public class UserController {
     }
 
     @PostMapping("/login")
-    public ResponseEntity<?> login(RequestBody LoginRequestDTO loginDTO) {
+    public ResponseEntity<?> login(@RequestBody LoginRequestDTO loginDTO) {
         try {
-            User userLogado = userService.realizarLogin(loginDTO);
+            User userLogado = userService.realizeLogin(loginDTO);
             return ResponseEntity.ok(userLogado); // Retorna 200 OK com os dados do usuário
         } catch (RuntimeException e) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(e.getMessage()); // Retorna 401 se errar
