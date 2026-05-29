@@ -1,10 +1,10 @@
-package com.project.soul.application.service;
+package com.project.soul.user.application.service;
 
-import com.project.soul.domain.entity.User;
-import com.project.soul.domain.repository.UserRepository;
+import com.project.soul.user.application.dto.LoginRequestDTO;
+import com.project.soul.user.domain.entity.User;
+import com.project.soul.user.domain.repository.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
-import org.springframework.web.bind.annotation.PostMapping;
 
 import java.util.Date;
 import java.util.List;
@@ -13,26 +13,33 @@ import java.util.List;
 public class UserService {
 
     @Autowired
-    UserRepository userRepository;
+    private UserRepository userRepository;
 
-    //metodo criar usuario
-    @PostMapping()
-    public User createUser(User user){
+    //CRIAR USUARIO
+    public User createUser(User user) {
+        if (userRepository.existsByEmail(user.getEmail())) {
+            throw new RuntimeException("Este e-mail já está em uso!");
+        }
+
+        if (userRepository.existsByUsername(user.getUsername())) {
+            throw new RuntimeException("Este nome de usuário já está em uso!");
+        }
+
         user.setCreatedAt(new Date());
         user.setAccountStatus(true);
 
         return userRepository.save(user);
     }
 
-    //listar usuario
-    public List<User> listUser(){
+    // LISTAR USUARIOS
+    public List<User> listUser() {
         return userRepository.findAll();
     }
 
-    //atualizar usuario
-    public User updateUser(Long id, User updatedUser){
+    //ATUALIZAR USUARIO
+    public User updateUser(Long id, User updatedUser) {
         User existentUser = userRepository.findById(id)
-                .orElseThrow(()-> new RuntimeException("User not found with ID: "+id));
+                .orElseThrow(() -> new RuntimeException("User not found with ID: " + id));
 
         existentUser.setName(updatedUser.getName());
         existentUser.setBio(updatedUser.getBio());
@@ -41,15 +48,22 @@ public class UserService {
         return userRepository.save(existentUser);
     }
 
-    //deletar usuario
-    public void deleteUser(Long id){
-        if (!userRepository.existsById(id)){
-            throw new RuntimeException("Usuário não encontrado com o ID: "+id);
+    // DELETAR USUARIO
+    public void deleteUser(Long id) {
+        if (!userRepository.existsById(id)) {
+            throw new RuntimeException("User not found with ID: " + id);
         }
         userRepository.deleteById(id);
     }
 
+    // LOGAR
+    public User realizeLogin(LoginRequestDTO loginDTO) {
+        User user = userRepository.findByEmail(loginDTO.email())
+                .orElseThrow(() -> new RuntimeException("E-mail not registered."));
 
-
-
+        if (!user.getPassword().equals(loginDTO.password())) {
+            throw new RuntimeException("Invalid password.");
+        }
+        return user;
+    }
 }

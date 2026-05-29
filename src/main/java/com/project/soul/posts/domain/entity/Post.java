@@ -1,5 +1,6 @@
-package com.project.soul.domain.entity;
+package com.project.soul.posts.domain.entity;
 
+import com.project.soul.user.domain.entity.User;
 import jakarta.persistence.*;
 import lombok.*;
 

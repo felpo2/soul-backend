@@ -1,7 +1,7 @@
-package com.project.soul.interface_ui.controller;
+package com.project.soul.posts.interface_ui.controller;
 
-import com.project.soul.domain.entity.Post;
-import com.project.soul.application.service.PostService;
+import com.project.soul.posts.domain.entity.Post;
+import com.project.soul.posts.application.service.PostService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
