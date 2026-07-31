@@ -7,6 +7,8 @@ import com.project.soul.user.domain.repository.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.util.UUID;
+
 @Service
 public class PostService {
 
@@ -17,11 +19,15 @@ public class PostService {
     private UserRepository userRepository;
 
     //metodo criar postagem
-    public Post createPost(Long userId, Post post){
+    public Post createPost(UUID userId, Post post){
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new RuntimeException("User Not Found"));
 
         post.setUser(user);
         return postRepository.save(post);
+    }
+
+    public Post listPost(UUID userId){
+        
     }
 }

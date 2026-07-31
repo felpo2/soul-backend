@@ -7,6 +7,8 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.UUID;
+
 @RestController
 @RequestMapping("/posts")
 public class PostController {
@@ -16,7 +18,7 @@ public class PostController {
 
     //criar publicacoes
     @PostMapping("/user/{userId}")
-    public ResponseEntity<Post> createPost(@PathVariable Long userId, @RequestBody Post post){
+    public ResponseEntity<Post> createPost(@PathVariable UUID userId, @RequestBody Post post){
         Post newPost = postService.createPost(userId, post);
         return ResponseEntity.status(HttpStatus.CREATED).body(newPost);
     }

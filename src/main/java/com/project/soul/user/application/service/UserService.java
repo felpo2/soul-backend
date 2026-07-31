@@ -17,6 +17,7 @@ import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.Date;
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 
 @Service
@@ -98,10 +99,13 @@ public class UserService {
     //Envio do email para resetar senha
     @Transactional
     public void requestPasswordReset(String email){
+        Optional<User> userOptional = userRepository.findByEmail(email);
 
-        User user = userRepository.findByEmail(email)
-                .orElseThrow(()-> new RuntimeException("If the email exists, a link has been sent."));
+        if (userOptional.isEmpty()){
+            return;
+        }
 
+       User user = userOptional.get();
 
         tokenRepository.deleteByUser(user);
 
