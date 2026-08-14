@@ -3,6 +3,7 @@ package com.project.soul.posts.domain.entity;
 import com.project.soul.user.domain.entity.User;
 import jakarta.persistence.*;
 import lombok.*;
+import org.hibernate.annotations.CreationTimestamp;
 
 import java.util.Date;
 
@@ -24,6 +25,8 @@ public class Post {
 
     private String content;
     private String imageUrl;
+
+    @CreationTimestamp
     private Date createdAt;
     private Boolean visibility;
     private Boolean metricsStatus;
