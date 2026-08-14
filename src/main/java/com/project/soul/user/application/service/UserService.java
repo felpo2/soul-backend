@@ -142,7 +142,7 @@ public class UserService {
     }
 
     //Metodo ordinario para mudar senha
-    public void changePassword(Long userId, ChangePasswordDTO dto) {
+    public void changePassword(UUID userId, ChangePasswordDTO dto) {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new RuntimeException("User not found."));
 
@@ -159,7 +159,7 @@ public class UserService {
         userRepository.save(user);
     }
 
-    public void changeEmail(Long userId, ChangeEmailDTO dto) {
+    public void changeEmail(UUID userId, ChangeEmailDTO dto) {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new RuntimeException("User not found."));
 

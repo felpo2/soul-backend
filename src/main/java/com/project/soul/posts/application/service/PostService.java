@@ -10,6 +10,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
+import java.util.Date;
 import java.util.List;
 import java.util.UUID;
 
@@ -23,12 +24,10 @@ public class PostService {
     private UserRepository userRepository;
 
     // Criar postagem
-    public Post createPost(UUID userId, Post post) {
-
-        User user = userRepository.findById(userId)
-                .orElseThrow(() -> new RuntimeException("User Not Found"));
+    public Post createPost(User user, Post post) {
 
         post.setUser(user);
+        post.setCreatedAt(new Date());
 
         return postRepository.save(post);
     }

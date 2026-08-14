@@ -78,7 +78,7 @@ public class UserController {
     //mudar senha PARA ALTERAÇÃO DA SENHA DO PERFIL(OBS: não é ESQUECI A SENHA)
     @PutMapping("/{id}/change-password")
     public ResponseEntity<String> changePassword(
-            @PathVariable Long id,
+            @PathVariable UUID id,
             @RequestBody ChangePasswordDTO dto) {
         try {
             userService.changePassword(id, dto);
@@ -91,7 +91,7 @@ public class UserController {
     //Mudar e-mail
     @PutMapping("/{id}/change-email")
     public ResponseEntity<String> changeEmail(
-            @PathVariable Long id,
+            @PathVariable UUID id,
             @RequestBody ChangeEmailDTO dto) {
         try {
             userService.changeEmail(id, dto);

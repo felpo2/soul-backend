@@ -1,8 +1,9 @@
 package com.project.soul.posts.interface_ui.controller;
 
 import com.project.soul.posts.application.dto.PostResponseDTO;
-import com.project.soul.posts.domain.entity.Post;
 import com.project.soul.posts.application.service.PostService;
+import com.project.soul.posts.domain.entity.Post;
+import com.project.soul.user.domain.entity.User;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -10,6 +11,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.UUID;
@@ -22,12 +24,14 @@ public class PostController {
     private PostService postService;
 
     // Criar publicação
-    @PostMapping("/user/{userId}")
+    @PostMapping
     public ResponseEntity<Post> createPost(
-            @PathVariable UUID userId,
-            @RequestBody Post post) {
+            @RequestBody Post post,
+            Authentication authentication) {
 
-        Post newPost = postService.createPost(userId, post);
+        User user = (User) authentication.getPrincipal();
+
+        Post newPost = postService.createPost(user, post);
 
         return ResponseEntity
                 .status(HttpStatus.CREATED)

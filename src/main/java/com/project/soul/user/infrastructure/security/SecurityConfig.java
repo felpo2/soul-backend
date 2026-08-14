@@ -22,16 +22,32 @@ public class SecurityConfig {
 
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
+
         http
                 .csrf(csrf -> csrf.disable())
-                .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+
+                .sessionManagement(session ->
+                        session.sessionCreationPolicy(SessionCreationPolicy.STATELESS)
+                )
+
                 .authorizeHttpRequests(auth -> auth
-                        // Endpoints PUBLICOS (NAO PRECISA DE TOKEN)
-                        .requestMatchers("/user/login", "/user/create", "/user/forgot-password", "/user/reset-password").permitAll()
-                        // Qualquer outro endpoint exige autenticação
+
+                        // Rotas publicas
+                        .requestMatchers(
+                                "/user/create",
+                                "/user/login",
+                                "/user/forgot-password",
+                                "/user/reset-password"
+                        ).permitAll()
+
+                        //resto precisa de auth
                         .anyRequest().authenticated()
                 )
-                .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
+
+                .addFilterBefore(
+                        jwtAuthenticationFilter,
+                        UsernamePasswordAuthenticationFilter.class
+                );
 
         return http.build();
     }
