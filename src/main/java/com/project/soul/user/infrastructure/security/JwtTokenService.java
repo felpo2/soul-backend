@@ -16,7 +16,7 @@ import java.util.Date;
 public class JwtTokenService {
 
     // Lê a chave secreta do application.properties ou usa uma default segura
-    @Value("${api.security.token.secret:sua_chave_secreta_super_longa_e_segura_aqui_123456}")
+    @Value("${api.security.token.secret}")
     private String secret;
 
     // 7200000ms = 2h. ou seja: o TOKEN de sessão dura 2h
