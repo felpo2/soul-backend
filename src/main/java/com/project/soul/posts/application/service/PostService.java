@@ -65,5 +65,29 @@ public class PostService {
                         post.getUser().getProfilePicture()
                 ));
     }
+
+    public Post updatePost(UUID postId, User authenticatedUser, Post updatedPost) {
+        Post post = postRepository.findById(postId)
+                .orElseThrow(() -> new RuntimeException("Post not found."));
+
+        if (!post.getUser().getId().equals(authenticatedUser.getId())) {
+            throw new RuntimeException("You are not allowed to edit this post.");
+        }
+
+        post.setContent(updatedPost.getContent());
+
+        return postRepository.save(post);
+    }
+
+    public void deletePost(UUID postId, User authenticatedUser) {
+        Post post = postRepository.findById(postId)
+                .orElseThrow(() -> new RuntimeException("Post not found."));
+
+        if (!post.getUser().getId().equals(authenticatedUser.getId())) {
+            throw new RuntimeException("You are not allowed to delete this post.");
+        }
+
+        postRepository.delete(post);
+    }
 }
 

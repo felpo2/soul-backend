@@ -71,5 +71,36 @@ public class PostController {
         return ResponseEntity.ok(
                 postService.listPostsByUser(userId, pageable)
         );
+
+
+    }
+
+    @PutMapping("/{postId}")
+    public ResponseEntity<Post> updatePost(
+            @PathVariable UUID postId,
+            @RequestBody Post updatedPost,
+            Authentication authentication) {
+
+        User user = (User) authentication.getPrincipal();
+
+        Post post = postService.updatePost(
+                postId,
+                user,
+                updatedPost
+        );
+
+        return ResponseEntity.ok(post);
+    }
+
+    @DeleteMapping("/{postId}")
+    public ResponseEntity<Void> deletePost(
+            @PathVariable UUID postId,
+            Authentication authentication) {
+
+        User user = (User) authentication.getPrincipal();
+
+        postService.deletePost(postId, user);
+
+        return ResponseEntity.noContent().build();
     }
 }
