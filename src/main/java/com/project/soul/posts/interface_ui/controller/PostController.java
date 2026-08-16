@@ -103,4 +103,13 @@ public class PostController {
 
         return ResponseEntity.noContent().build();
     }
+
+    @GetMapping("/{postId}")
+    public ResponseEntity<PostResponseDTO> getPostById(
+            @PathVariable UUID postId) {
+
+        return ResponseEntity.ok(
+                postService.getPostById(postId)
+        );
+    }
 }

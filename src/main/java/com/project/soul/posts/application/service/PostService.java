@@ -1,6 +1,7 @@
 package com.project.soul.posts.application.service;
 
 import com.project.soul.posts.application.dto.PostResponseDTO;
+import com.project.soul.posts.application.exception.PostNotFoundException;
 import com.project.soul.posts.domain.entity.Post;
 import com.project.soul.user.domain.entity.User;
 import com.project.soul.posts.domain.repository.PostRepository;
@@ -88,6 +89,23 @@ public class PostService {
         }
 
         postRepository.delete(post);
+    }
+
+    public PostResponseDTO getPostById(UUID postId) {
+
+        Post post = postRepository.findById(postId)
+                .orElseThrow(() -> new PostNotFoundException("Post not found."));
+
+        return new PostResponseDTO(
+                post.getId(),
+                post.getContent(),
+                post.getImageUrl(),
+                post.getCreatedAt(),
+                post.getUser().getId(),
+                post.getUser().getUsername(),
+                post.getUser().getName(),
+                post.getUser().getProfilePicture()
+        );
     }
 }
 
