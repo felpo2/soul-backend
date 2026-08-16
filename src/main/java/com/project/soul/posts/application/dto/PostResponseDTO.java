@@ -10,7 +10,7 @@ import java.util.UUID;
 @AllArgsConstructor
 public class PostResponseDTO {
 
-    private Long id;
+    private UUID id;
     private String content;
     private String imageUrl;
     private Date createdAt;
