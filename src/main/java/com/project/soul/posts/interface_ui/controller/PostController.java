@@ -1,8 +1,8 @@
 package com.project.soul.posts.interface_ui.controller;
 
 import com.project.soul.posts.application.dto.PostResponseDTO;
+import com.project.soul.posts.application.dto.PostRequestDTO;
 import com.project.soul.posts.application.service.PostService;
-import com.project.soul.posts.domain.entity.Post;
 import com.project.soul.user.domain.entity.User;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
@@ -25,13 +25,13 @@ public class PostController {
 
     // Criar publicação
     @PostMapping
-    public ResponseEntity<Post> createPost(
-            @RequestBody Post post,
+    public ResponseEntity<PostResponseDTO> createPost(
+            @RequestBody PostRequestDTO post,
             Authentication authentication) {
 
         User user = (User) authentication.getPrincipal();
 
-        Post newPost = postService.createPost(user, post);
+        PostResponseDTO newPost = postService.createPost(user, post);
 
         return ResponseEntity
                 .status(HttpStatus.CREATED)
@@ -76,14 +76,14 @@ public class PostController {
     }
 
     @PutMapping("/{postId}")
-    public ResponseEntity<Post> updatePost(
+    public ResponseEntity<PostResponseDTO> updatePost(
             @PathVariable UUID postId,
-            @RequestBody Post updatedPost,
+            @RequestBody PostRequestDTO updatedPost,
             Authentication authentication) {
 
         User user = (User) authentication.getPrincipal();
 
-        Post post = postService.updatePost(
+        PostResponseDTO post = postService.updatePost(
                 postId,
                 user,
                 updatedPost

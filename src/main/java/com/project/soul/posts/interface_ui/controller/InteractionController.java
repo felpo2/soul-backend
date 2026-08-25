@@ -1,7 +1,9 @@
 package com.project.soul.posts.interface_ui.controller;
 
 import com.project.soul.posts.application.service.InteractionService;
+import com.project.soul.user.domain.entity.User;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.UUID;
@@ -19,10 +21,10 @@ public class InteractionController {
     @PostMapping("/{postId}/like")
     public ResponseEntity<Void> likePost(
             @PathVariable UUID postId,
-            @RequestAttribute("userId") UUID userId
+            Authentication authentication
     ) {
-
-        interactionService.likePost(postId, userId);
+        User user = (User) authentication.getPrincipal();
+        interactionService.likePost(postId, user.getId());
 
         return ResponseEntity.ok().build();
     }
@@ -30,10 +32,10 @@ public class InteractionController {
     @DeleteMapping("/{postId}/like")
     public ResponseEntity<Void> unlikePost(
             @PathVariable UUID postId,
-            @RequestAttribute("userId") UUID userId
+            Authentication authentication
     ) {
-
-        interactionService.unlikePost(postId, userId);
+        User user = (User) authentication.getPrincipal();
+        interactionService.unlikePost(postId, user.getId());
 
         return ResponseEntity.noContent().build();
     }

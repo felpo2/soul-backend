@@ -4,6 +4,7 @@ import com.project.soul.user.application.dto.ChangeEmailDTO;
 import com.project.soul.user.application.dto.ChangePasswordDTO;
 import com.project.soul.user.application.dto.LoginRequestDTO;
 import com.project.soul.user.application.dto.LoginResponseDTO;
+import com.project.soul.user.application.dto.UpdateUserRequestDTO;
 import com.project.soul.user.domain.entity.PasswordResetToken;
 import com.project.soul.user.domain.entity.User;
 import com.project.soul.user.domain.repository.TokenRepository;
@@ -62,13 +63,13 @@ public class UserService {
     }
 
     //ATUALIZAR USUARIO
-    public User updateUser(UUID id, User updatedUser) {
+    public User updateUser(UUID id, UpdateUserRequestDTO updatedUser) {
         User existentUser = userRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("User not found with ID: " + id));
 
-        existentUser.setName(updatedUser.getName());
-        existentUser.setBio(updatedUser.getBio());
-        existentUser.setProfilePicture(updatedUser.getProfilePicture());
+        existentUser.setName(updatedUser.name());
+        existentUser.setBio(updatedUser.bio());
+        existentUser.setProfilePicture(updatedUser.profilePicture());
 
 
         return userRepository.save(existentUser);

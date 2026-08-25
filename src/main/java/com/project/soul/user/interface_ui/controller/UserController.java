@@ -1,14 +1,13 @@
 package com.project.soul.user.interface_ui.controller;
 
-import com.project.soul.user.application.dto.ChangeEmailDTO;
-import com.project.soul.user.application.dto.ChangePasswordDTO;
-import com.project.soul.user.application.dto.LoginRequestDTO;
-import com.project.soul.user.application.dto.LoginResponseDTO;
+import com.project.soul.user.application.dto.*;
 import com.project.soul.user.domain.entity.User;
 import com.project.soul.user.application.service.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.AccessDeniedException;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -23,29 +22,44 @@ public class UserController {
 
     //criar usuario
     @PostMapping("/create")
-    public ResponseEntity<?> createUser(@RequestBody User user) {
+    public ResponseEntity<?> createUser(@RequestBody CreateUserRequestDTO request) {
         try {
+            User user = User.builder()
+                    .name(request.name())
+                    .username(request.username())
+                    .email(request.email())
+                    .password(request.password())
+                    .dateOfBirth(request.dateOfBirth())
+                    .profilePicture(request.profilePicture())
+                    .bio(request.bio())
+                    .build();
             User newUser = userService.createUser(user);
-            return ResponseEntity.status(HttpStatus.CREATED).body(newUser);
+            return ResponseEntity.status(HttpStatus.CREATED).body(UserResponseDTO.from(newUser));
         } catch (RuntimeException e) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.getMessage());
         }
     }
     @GetMapping("/all")
-    public ResponseEntity<List<User>> getAllUsers(){
-        List<User> users = userService.listUser();
+    public ResponseEntity<List<UserResponseDTO>> getAllUsers(){
+        List<UserResponseDTO> users = userService.listUser().stream()
+                .map(UserResponseDTO::from)
+                .toList();
         return ResponseEntity.ok(users);
     }
 
     @PutMapping("/update/{id}")
-    public ResponseEntity<User> updateUser(@PathVariable UUID id, @RequestBody User user){
-
-        User updatedUser = userService.updateUser(id, user);
-        return ResponseEntity.ok(updatedUser);
+    public ResponseEntity<UserResponseDTO> updateUser(
+            @PathVariable UUID id,
+            @RequestBody UpdateUserRequestDTO request,
+            Authentication authentication) {
+        ensureOwnAccount(id, authentication);
+        User updatedUser = userService.updateUser(id, request);
+        return ResponseEntity.ok(UserResponseDTO.from(updatedUser));
     }
 
     @DeleteMapping("/delete/{id}")
-    public ResponseEntity<Void> deleteUser(@PathVariable UUID id){
+    public ResponseEntity<Void> deleteUser(@PathVariable UUID id, Authentication authentication){
+        ensureOwnAccount(id, authentication);
         userService.deleteUser(id);
         return ResponseEntity.noContent().build();
     }
@@ -79,7 +93,9 @@ public class UserController {
     @PutMapping("/{id}/change-password")
     public ResponseEntity<String> changePassword(
             @PathVariable UUID id,
-            @RequestBody ChangePasswordDTO dto) {
+            @RequestBody ChangePasswordDTO dto,
+            Authentication authentication) {
+        ensureOwnAccount(id, authentication);
         try {
             userService.changePassword(id, dto);
             return ResponseEntity.ok("Password changed successfully");
@@ -92,12 +108,21 @@ public class UserController {
     @PutMapping("/{id}/change-email")
     public ResponseEntity<String> changeEmail(
             @PathVariable UUID id,
-            @RequestBody ChangeEmailDTO dto) {
+            @RequestBody ChangeEmailDTO dto,
+            Authentication authentication) {
+        ensureOwnAccount(id, authentication);
         try {
             userService.changeEmail(id, dto);
             return ResponseEntity.ok("E-mail changed successfully");
         } catch (RuntimeException e) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.getMessage());
+        }
+    }
+
+    private void ensureOwnAccount(UUID requestedId, Authentication authentication) {
+        User authenticatedUser = (User) authentication.getPrincipal();
+        if (!authenticatedUser.getId().equals(requestedId)) {
+            throw new AccessDeniedException("You cannot modify another user's account.");
         }
     }
 }

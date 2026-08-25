@@ -1,6 +1,8 @@
 package com.project.soul.application.exception;
 
 import com.project.soul.posts.application.exception.PostNotFoundException;
+import com.project.soul.posts.application.exception.InteractionAlreadyExistsException;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.ExceptionHandler;
@@ -34,6 +36,23 @@ public class GlobalExceptionHandler {
                         "status", 400,
                         "message", "Invalid post ID."
                 ));
+    }
+
+    @ExceptionHandler(AccessDeniedException.class)
+    public ResponseEntity<Map<String, Object>> handleAccessDenied(AccessDeniedException exception) {
+        return ResponseEntity.status(HttpStatus.FORBIDDEN).body(Map.of(
+                "status", 403,
+                "message", exception.getMessage()
+        ));
+    }
+
+    @ExceptionHandler(InteractionAlreadyExistsException.class)
+    public ResponseEntity<Map<String, Object>> handleInteractionConflict(
+            InteractionAlreadyExistsException exception) {
+        return ResponseEntity.status(HttpStatus.CONFLICT).body(Map.of(
+                "status", 409,
+                "message", exception.getMessage()
+        ));
     }
 
     @ExceptionHandler(Exception.class)
