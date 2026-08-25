@@ -2,12 +2,26 @@ package com.project.soul.user.interface_ui.controller;
 
 import com.project.soul.user.application.dto.*;
 import com.project.soul.user.domain.entity.User;
+import com.project.soul.user.application.service.RefreshTokenService;
+import com.project.soul.user.application.service.ProfileService;
 import com.project.soul.user.application.service.UserService;
+import com.project.soul.user.application.service.FollowService;
+import jakarta.validation.Valid;
+import jakarta.validation.constraints.Email;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.Size;
+import jakarta.validation.constraints.Min;
+import jakarta.validation.constraints.Max;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.core.Authentication;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -15,14 +29,24 @@ import java.util.UUID;
 
 @RestController
 @RequestMapping("/user")
+@Validated
 public class UserController {
 
     @Autowired
     UserService userService;
 
+    @Autowired
+    RefreshTokenService refreshTokenService;
+
+    @Autowired
+    ProfileService profileService;
+
+    @Autowired
+    FollowService followService;
+
     //criar usuario
     @PostMapping("/create")
-    public ResponseEntity<?> createUser(@RequestBody CreateUserRequestDTO request) {
+    public ResponseEntity<?> createUser(@Valid @RequestBody CreateUserRequestDTO request) {
         try {
             User user = User.builder()
                     .name(request.name())
@@ -47,10 +71,89 @@ public class UserController {
         return ResponseEntity.ok(users);
     }
 
+    @GetMapping("/me")
+    public ResponseEntity<CurrentUserResponseDTO> getCurrentUser(Authentication authentication) {
+        return ResponseEntity.ok(CurrentUserResponseDTO.from(authenticatedUser(authentication)));
+    }
+
+    @PutMapping("/me")
+    public ResponseEntity<CurrentUserResponseDTO> updateCurrentUser(
+            @Valid @RequestBody UpdateUserRequestDTO request,
+            Authentication authentication) {
+        User user = authenticatedUser(authentication);
+        User updatedUser = userService.updateUser(user.getId(), request);
+        return ResponseEntity.ok(CurrentUserResponseDTO.from(updatedUser));
+    }
+
+    @DeleteMapping("/me")
+    public ResponseEntity<Void> deleteCurrentUser(Authentication authentication) {
+        User user = authenticatedUser(authentication);
+        userService.deleteUser(user.getId());
+        return ResponseEntity.noContent().build();
+    }
+
+    @PutMapping("/me/password")
+    public ResponseEntity<String> changeCurrentUserPassword(
+            @Valid @RequestBody ChangePasswordDTO dto,
+            Authentication authentication) {
+        User user = authenticatedUser(authentication);
+        userService.changePassword(user.getId(), dto);
+        return ResponseEntity.ok("Password changed successfully");
+    }
+
+    @PutMapping("/me/email")
+    public ResponseEntity<String> changeCurrentUserEmail(
+            @Valid @RequestBody ChangeEmailDTO dto,
+            Authentication authentication) {
+        User user = authenticatedUser(authentication);
+        userService.changeEmail(user.getId(), dto);
+        return ResponseEntity.ok("E-mail changed successfully");
+    }
+
+    @PutMapping("/me/privacy")
+    public ResponseEntity<PublicProfileResponseDTO> updateCurrentUserPrivacy(
+            @Valid @RequestBody ProfileVisibilityDTO request,
+            Authentication authentication) {
+        User user = authenticatedUser(authentication);
+        return ResponseEntity.ok(
+                profileService.updateVisibility(user, request.privateProfile())
+        );
+    }
+
+    @GetMapping("/me/follow-requests")
+    public ResponseEntity<Page<FollowRequestResponseDTO>> followRequests(
+            @RequestParam(defaultValue = "0") @Min(0) int page,
+            @RequestParam(defaultValue = "20") @Min(1) @Max(100) int size,
+            Authentication authentication) {
+        User user = authenticatedUser(authentication);
+        Pageable pageable = PageRequest.of(
+                page,
+                size,
+                Sort.by("createdAt").descending()
+        );
+        return ResponseEntity.ok(followService.pendingRequests(user, pageable));
+    }
+
+    @PostMapping("/me/follow-requests/{requestId}/accept")
+    public ResponseEntity<Void> acceptFollowRequest(
+            @PathVariable UUID requestId,
+            Authentication authentication) {
+        followService.accept(authenticatedUser(authentication), requestId);
+        return ResponseEntity.noContent().build();
+    }
+
+    @DeleteMapping("/me/follow-requests/{requestId}")
+    public ResponseEntity<Void> rejectFollowRequest(
+            @PathVariable UUID requestId,
+            Authentication authentication) {
+        followService.reject(authenticatedUser(authentication), requestId);
+        return ResponseEntity.noContent().build();
+    }
+
     @PutMapping("/update/{id}")
     public ResponseEntity<UserResponseDTO> updateUser(
             @PathVariable UUID id,
-            @RequestBody UpdateUserRequestDTO request,
+            @Valid @RequestBody UpdateUserRequestDTO request,
             Authentication authentication) {
         ensureOwnAccount(id, authentication);
         User updatedUser = userService.updateUser(id, request);
@@ -65,7 +168,7 @@ public class UserController {
     }
 
     @PostMapping("/login")
-    public ResponseEntity<?> login(@RequestBody LoginRequestDTO dto) {
+    public ResponseEntity<?> login(@Valid @RequestBody LoginRequestDTO dto) {
         try {
             LoginResponseDTO response = userService.realizeLogin(dto);
             return ResponseEntity.ok(response);
@@ -76,7 +179,8 @@ public class UserController {
 
     //ENVIO DO E-MAIL DE RECUPERAÇÃO (ainda incompleto/não funcionando)
     @PostMapping("/forgot-password")
-    public ResponseEntity<String> forgotPassword(@RequestParam String email) {
+    public ResponseEntity<String> forgotPassword(
+            @RequestParam @NotBlank @Email String email) {
         userService.requestPasswordReset(email);
         return ResponseEntity.ok("If the email is registered, the recovery token has been sent!");
     }
@@ -84,7 +188,9 @@ public class UserController {
 
     //RESET PASSWORD PARA ESQUECI A SENHA
     @PostMapping("/reset-password")
-    public ResponseEntity<String> resetPassword(@RequestParam String token, @RequestParam String newPassword) {
+    public ResponseEntity<String> resetPassword(
+            @RequestParam @NotBlank String token,
+            @RequestParam @NotBlank @Size(min = 8, max = 72) String newPassword) {
         userService.resetPassword(token, newPassword);
         return ResponseEntity.ok("Password changed successfully!");
     }
@@ -93,7 +199,7 @@ public class UserController {
     @PutMapping("/{id}/change-password")
     public ResponseEntity<String> changePassword(
             @PathVariable UUID id,
-            @RequestBody ChangePasswordDTO dto,
+            @Valid @RequestBody ChangePasswordDTO dto,
             Authentication authentication) {
         ensureOwnAccount(id, authentication);
         try {
@@ -108,7 +214,7 @@ public class UserController {
     @PutMapping("/{id}/change-email")
     public ResponseEntity<String> changeEmail(
             @PathVariable UUID id,
-            @RequestBody ChangeEmailDTO dto,
+            @Valid @RequestBody ChangeEmailDTO dto,
             Authentication authentication) {
         ensureOwnAccount(id, authentication);
         try {
@@ -119,10 +225,26 @@ public class UserController {
         }
     }
 
+    @PostMapping("/refresh-token")
+    public ResponseEntity<LoginResponseDTO> refreshToken(
+            @Valid @RequestBody RefreshTokenRequestDTO request) {
+        return ResponseEntity.ok(refreshTokenService.rotate(request.refreshToken()));
+    }
+
+    @PostMapping("/logout")
+    public ResponseEntity<Void> logout(@Valid @RequestBody RefreshTokenRequestDTO request) {
+        refreshTokenService.revoke(request.refreshToken());
+        return ResponseEntity.noContent().build();
+    }
+
     private void ensureOwnAccount(UUID requestedId, Authentication authentication) {
-        User authenticatedUser = (User) authentication.getPrincipal();
+        User authenticatedUser = authenticatedUser(authentication);
         if (!authenticatedUser.getId().equals(requestedId)) {
             throw new AccessDeniedException("You cannot modify another user's account.");
         }
+    }
+
+    private User authenticatedUser(Authentication authentication) {
+        return (User) authentication.getPrincipal();
     }
 }

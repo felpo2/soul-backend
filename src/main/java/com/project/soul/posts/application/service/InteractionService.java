@@ -78,7 +78,9 @@ public class InteractionService {
 
     @Transactional(readOnly = true)
     public long countLikes(UUID postId) {
-
+        if (!postRepository.existsById(postId)) {
+            throw new PostNotFoundException("Post not found.");
+        }
         return interactionRepository.countByPostIdAndType(
                 postId,
                 InteractionType.LIKE

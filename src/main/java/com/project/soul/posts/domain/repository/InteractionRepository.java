@@ -25,4 +25,8 @@ public interface InteractionRepository extends JpaRepository<Interaction, UUID> 
             UUID postId,
             InteractionType type
     );
+
+    void deleteByPostId(UUID postId);
+
+    void deleteByUser(User user);
 }

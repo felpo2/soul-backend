@@ -5,11 +5,16 @@ import com.project.soul.user.application.dto.ChangePasswordDTO;
 import com.project.soul.user.application.dto.LoginRequestDTO;
 import com.project.soul.user.application.dto.LoginResponseDTO;
 import com.project.soul.user.application.dto.UpdateUserRequestDTO;
+import com.project.soul.user.application.dto.UserResponseDTO;
 import com.project.soul.user.domain.entity.PasswordResetToken;
 import com.project.soul.user.domain.entity.User;
 import com.project.soul.user.domain.repository.TokenRepository;
 import com.project.soul.user.domain.repository.UserRepository;
 import com.project.soul.user.infrastructure.security.JwtTokenService;
+import com.project.soul.posts.domain.repository.CommentRepository;
+import com.project.soul.posts.domain.repository.InteractionRepository;
+import com.project.soul.posts.domain.repository.PostRepository;
+import com.project.soul.user.domain.repository.FollowRepository;
 import jakarta.transaction.Transactional;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -29,13 +34,33 @@ public class UserService {
     private TokenRepository tokenRepository;
     private EmailService emailService;
     private JwtTokenService jwtTokenService;
+    private RefreshTokenService refreshTokenService;
+    private CommentRepository commentRepository;
+    private InteractionRepository interactionRepository;
+    private PostRepository postRepository;
+    private FollowRepository followRepository;
 
-    public UserService(UserRepository userRepository, PasswordEncoder passwordEncoder, TokenRepository tokenRepository, EmailService emailService, JwtTokenService jwtTokenService){
+    public UserService(
+            UserRepository userRepository,
+            PasswordEncoder passwordEncoder,
+            TokenRepository tokenRepository,
+            EmailService emailService,
+            JwtTokenService jwtTokenService,
+            RefreshTokenService refreshTokenService,
+            CommentRepository commentRepository,
+            InteractionRepository interactionRepository,
+            PostRepository postRepository,
+            FollowRepository followRepository) {
         this.userRepository = userRepository;
         this.passwordEncoder = passwordEncoder;
         this.tokenRepository = tokenRepository;
         this.emailService = emailService;
         this.jwtTokenService = jwtTokenService;
+        this.refreshTokenService = refreshTokenService;
+        this.commentRepository = commentRepository;
+        this.interactionRepository = interactionRepository;
+        this.postRepository = postRepository;
+        this.followRepository = followRepository;
     }
 
     //CRIAR USUARIO
@@ -53,6 +78,8 @@ public class UserService {
 
         user.setCreatedAt(new Date());
         user.setAccountStatus(true);
+        user.setPrivacyStatus(false);
+        user.setMetricsStatus(true);
 
         return userRepository.save(user);
     }
@@ -76,11 +103,22 @@ public class UserService {
     }
 
     // DELETAR USUARIO
+    @Transactional
     public void deleteUser(UUID id) {
-        if (!userRepository.existsById(id)) {
-            throw new RuntimeException("User not found with ID: " + id);
-        }
-        userRepository.deleteById(id);
+        User user = userRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("User not found with ID: " + id));
+        refreshTokenService.revokeAll(user);
+        tokenRepository.deleteByUser(user);
+        commentRepository.deleteByUser(user);
+        interactionRepository.deleteByUser(user);
+        followRepository.deleteByFollowerOrFollowing(user, user);
+        postRepository.findByUserId(id, org.springframework.data.domain.Pageable.unpaged())
+                .forEach(post -> {
+                    commentRepository.deleteByPostId(post.getId());
+                    interactionRepository.deleteByPostId(post.getId());
+                });
+        postRepository.deleteByUser(user);
+        userRepository.delete(user);
     }
 
     // LOGAR
@@ -94,7 +132,8 @@ public class UserService {
 
         // Gera o token JWT
         String token = jwtTokenService.generateToken(user);
-        return new LoginResponseDTO(token);
+        String refreshToken = refreshTokenService.create(user);
+        return new LoginResponseDTO(token, refreshToken, UserResponseDTO.from(user));
     }
 
     //Envio do email para resetar senha
@@ -138,6 +177,7 @@ public class UserService {
         User user = resetToken.getUser();
         user.setPassword(passwordEncoder.encode(newPassword));
         userRepository.save(user);
+        refreshTokenService.revokeAll(user);
 
         tokenRepository.delete(resetToken);
     }
@@ -158,6 +198,7 @@ public class UserService {
         //Criptografa e salva a nova senha
         user.setPassword(passwordEncoder.encode(dto.newPassword()));
         userRepository.save(user);
+        refreshTokenService.revokeAll(user);
     }
 
     public void changeEmail(UUID userId, ChangeEmailDTO dto) {

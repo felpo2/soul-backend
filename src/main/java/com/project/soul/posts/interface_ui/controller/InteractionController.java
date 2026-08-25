@@ -1,6 +1,7 @@
 package com.project.soul.posts.interface_ui.controller;
 
 import com.project.soul.posts.application.service.InteractionService;
+import com.project.soul.posts.application.dto.LikeCountResponseDTO;
 import com.project.soul.user.domain.entity.User;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
@@ -38,5 +39,10 @@ public class InteractionController {
         interactionService.unlikePost(postId, user.getId());
 
         return ResponseEntity.noContent().build();
+    }
+
+    @GetMapping("/{postId}/likes/count")
+    public ResponseEntity<LikeCountResponseDTO> countLikes(@PathVariable UUID postId) {
+        return ResponseEntity.ok(new LikeCountResponseDTO(interactionService.countLikes(postId)));
     }
 }
